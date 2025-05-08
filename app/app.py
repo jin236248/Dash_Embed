@@ -67,7 +67,7 @@ def prepare_df(selected_word, reduced_embed, similar_words, years, weight):
     # Add the selected word to the plot
     for year in years:
         data.append(
-            {"x": reduced_embed[index][0], "y": reduced_embed[index][1], "z": reduced_embed[index][2], "word": selected_word, "year": year, "size": 5}
+            {"x": reduced_embed[index][0], "y": reduced_embed[index][1], "z": reduced_embed[index][2], "word": selected_word, "year": year, "size": 3}
         )
         index += weight
 
@@ -77,8 +77,9 @@ def prepare_df(selected_word, reduced_embed, similar_words, years, weight):
         for word, similarity in similar_words[year]:
             if word not in all_similar_words:
                 data.append(
-                    {"x": reduced_embed[index][0], "y": reduced_embed[index][1], "z": reduced_embed[index][2], "word": word, "year": year, "size": 2}
+                    {"x": reduced_embed[index][0], "y": reduced_embed[index][1], "z": reduced_embed[index][2], "word": word, "year": year, "size": 1}
                 )
+                all_similar_words.append(word)
                 index += 1
 
     df = pd.DataFrame(data)
@@ -87,7 +88,28 @@ def prepare_df(selected_word, reduced_embed, similar_words, years, weight):
 
 def create_fig(df, reduced_embed, selected_word, years, weight):
     fig = px.scatter_3d(df, x="x", y="y", z="z", color="year", text="word", size="size")
-    fig.update_traces(textposition="top center")
+    # Disable hover on dots textfont=dict(size=10) hoverinfo="skip", hovertemplate=None
+    fig.update_traces(textposition="top center", textfont=dict(size=10))
+    # Disable projected lines when hovering
+    fig.update_layout(
+        scene=dict(
+            # xaxis=dict(showspikes=False),  # Disable projection lines on X-axis
+            # yaxis=dict(showspikes=False),  # Disable projection lines on Y-axis
+            # zaxis=dict(showspikes=False),  # Disable projection lines on Z-axis
+            camera=dict(eye=dict(x=0.5, y=0.5, z=0.5)),
+        ),
+        hovermode=False,  # Disable hover interaction that triggers projection lines
+        font=dict(size=10),  # Adjust font size globally
+    )
+
+    # Remove grey plane by disabling the zero planes and setting background to white
+    # fig.update_layout(
+    #     scene=dict(
+    #         xaxis=dict(showbackground=False, tickvals=[-1, 1], showgrid=True, gridcolor="black"),  # Remove background plane for X-axis
+    #         yaxis=dict(showbackground=False, tickvals=[-1, 1], showgrid=True, gridcolor="black"),  # Remove background plane for Y-axis
+    #         zaxis=dict(showbackground=False, tickvals=[-1, 1], showgrid=True, gridcolor="black"),  # Remove background plane for Z-axis
+    #     )
+    # )
 
     # Add grey lines connecting the three main words
 
@@ -101,8 +123,25 @@ def create_fig(df, reduced_embed, selected_word, years, weight):
                 y=[start_coords[1], end_coords[1]],
                 z=[start_coords[2], end_coords[2]],
                 mode="lines",
-                line=dict(color="grey", width=1, dash="dash"),
+                line=dict(color="black", width=2),  #  dash="longdash"
                 showlegend=False,
+            )
+        )
+        # Add the arrowhead using a cone
+        direction = np.array(start_coords) - np.array(end_coords)
+        fig.add_trace(
+            go.Cone(
+                x=[start_coords[0]],
+                y=[start_coords[1]],
+                z=[start_coords[2]],
+                u=[direction[0]],
+                v=[direction[1]],
+                w=[direction[2]],
+                sizemode="absolute",
+                sizeref=0.05,  # Adjust the size of the arrowhead
+                anchor="tip",
+                colorscale=[[0, "black"], [1, "black"]],
+                showscale=False,
             )
         )
 
@@ -114,10 +153,12 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # Layout of the app
 word_list = load_word_list()
+font_size = 10
 app.layout = html.Div(
     [
-        dcc.Dropdown(id="word-dropdown", options=[{"label": word, "value": word} for word in word_list], value=word_list[0], clearable=False),
-        dcc.Graph(id="3d-scatter-chart"),
+        dcc.Dropdown(id="word-dropdown", options=word_list, clearable=False),
+        # html.Div(id="output-container", style={"height": "80vh"}),
+        dcc.Graph(id="3d-scatter-chart", style={"height": "80vh"}),
     ]
 )
 
@@ -125,11 +166,15 @@ app.layout = html.Div(
 # Callback to update the 3D scatter chart
 @app.callback(Output("3d-scatter-chart", "figure"), [Input("word-dropdown", "value")])
 def update_scatter(selected_word):
+    if not selected_word:
+        return None
+
+    global font_size
 
     # parameters
     years = ["2006", "1997", "1987"]
-    weight = 2
-    topn = 3
+    weight = 5
+    topn = 15
 
     # get models and similar words
     models, similar_words = get_models_and_similar_words(selected_word, years, topn)
@@ -145,6 +190,9 @@ def update_scatter(selected_word):
 
     # Create 3D scatter plot
     fig = create_fig(df, reduced_embed, selected_word, years, weight)
+
+    # update font size otherwise it will get smaller the second time
+    # font_size = 20
 
     return fig
 
