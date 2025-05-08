@@ -6,3 +6,4 @@ scikit-learn
 jsonschema
 gunicorn
 dash_bootstrap_components
+gensim
