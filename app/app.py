@@ -66,7 +66,9 @@ def prepare_df(selected_word, reduced_embed, similar_words, years, weight):
 
     # Add the selected word to the plot
     for year in years:
-        data.append({"x": reduced_embed[0][0], "y": reduced_embed[0][1], "z": reduced_embed[0][2], "word": selected_word, "year": year, "size": 5})
+        data.append(
+            {"x": reduced_embed[index][0], "y": reduced_embed[index][1], "z": reduced_embed[index][2], "word": selected_word, "year": year, "size": 5}
+        )
         index += weight
 
     # Add similar words to the plot
