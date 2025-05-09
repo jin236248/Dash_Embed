@@ -26,16 +26,16 @@ def load_word_list():
     # return word_list
 
 
-def load_model(year):
-    model_path = f"app/models/sg0/{year}_e10.model"
+def load_model(year, sg):
+    model_path = f"app/models/sg{sg}/{year}_e10.model"
     model = Word2Vec.load(model_path)
     return model
 
 
-def get_models_and_similar_words(selected_word, years, topn):
+def get_models_and_similar_words(selected_word, years, sg, topn):
     models, similar_words = {}, {}
     for year in years:
-        models[year] = load_model(year)
+        models[year] = load_model(year, sg)
         similar_words[year] = [word for word, sim in models[year].wv.most_similar(selected_word, topn=topn)]
 
     return models, similar_words
@@ -232,7 +232,27 @@ word_dropdown = dbc.Row(
         width=6,
     ),
     justify="center",
-    className="mt-4 mb-4",
+    className="mt-4 mb-2",
+)
+
+sg_radio = dbc.Row(
+    dbc.Col(
+        dcc.RadioItems(
+            id="sg-radio",
+            options=[
+                {"label": "Continuous Bag of Words (CBOW)", "value": 0},
+                {"label": "Skip-Gram (SG)", "value": 1},
+            ],
+            value=0,  # Default to CBOW
+            inline=True,  # Display options horizontally
+            style={"fontSize": text_font_size, "fontFamily": text_font},
+            inputStyle={"marginRight": "10px"},  # Add space between the radio button and label
+            labelStyle={"marginRight": "20px"},  # Add space between the two choices
+        ),
+        width="auto",
+    ),
+    justify="center",
+    className="mb-2",
 )
 
 # Add color options for the dropdowns
@@ -253,7 +273,6 @@ color_dropdowns = dbc.Row(
     [
         dbc.Col(
             [
-                html.Label("Color for 1987:"),
                 dcc.Dropdown(
                     id="color-1987-dropdown",
                     options=color_options,
@@ -265,7 +284,6 @@ color_dropdowns = dbc.Row(
         ),
         dbc.Col(
             [
-                html.Label("Color for 1997:"),
                 dcc.Dropdown(
                     id="color-1997-dropdown",
                     options=color_options,
@@ -277,7 +295,6 @@ color_dropdowns = dbc.Row(
         ),
         dbc.Col(
             [
-                html.Label("Color for 2006:"),
                 dcc.Dropdown(
                     id="color-2006-dropdown",
                     options=color_options,
@@ -333,7 +350,7 @@ data_table = dash.dash_table.DataTable(
         "textAlign": "center",
         "fontFamily": text_font,
         "fontSize": text_font_size,
-        "padding": "15px",  # Increase padding to increase row height
+        "padding": "5px",  # Increase padding to increase row height
         "width": "33.33%",  # Make all columns equal width"
     },
     style_header={
@@ -359,7 +376,7 @@ data_table = dash.dash_table.DataTable(
 right_col = col(
     [
         upper_box([html.H2("Most Similar Words", style={"color": "white"}), html.P("How they change over time", style={"color": "white"})]),
-        flex_div(word_dropdown),
+        flex_div([word_dropdown, sg_radio]),
         color_dropdowns,  # Add the color dropdowns here
         dbc.Spinner(data_table, color="light"),
         lower_box(""),
@@ -390,12 +407,13 @@ app.layout = html.Div(
     ],
     [
         Input("word-dropdown", "value"),
+        Input("sg-radio", "value"),  # Add the radio button input
         Input("color-1987-dropdown", "value"),
         Input("color-1997-dropdown", "value"),
         Input("color-2006-dropdown", "value"),
     ],
 )
-def update_scatter(selected_word, color_1987, color_1997, color_2006):
+def update_scatter(selected_word, sg, color_1987, color_1997, color_2006):
     if not selected_word:
         return None, [], []
 
@@ -407,7 +425,7 @@ def update_scatter(selected_word, color_1987, color_1997, color_2006):
     topn = 15
 
     # get models and similar words
-    models, similar_words = get_models_and_similar_words(selected_word, years, topn)
+    models, similar_words = get_models_and_similar_words(selected_word, years, sg, topn)
 
     # list all words and their embeddings
     all_embeddings = get_all_embeddings(models, similar_words, selected_word, years, weight)
