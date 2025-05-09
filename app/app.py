@@ -154,7 +154,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 # Layout of the app
 word_list = load_word_list()
 font_size = 12  # initial font size, after one callback it will be set to 25 and the bug in the font size will be fixed
-text_font_size = 18
+text_font_size = 15
 text_font = "Verdana"
 
 
@@ -163,14 +163,14 @@ def div(children, bg_color):
         children,
         style={
             "height": "100%",
-            "minHeight": "600px",
+            "minHeight": "450px",
             "backgroundColor": bg_color,
             "borderRadius": "15px",
             "boxShadow": "0 8px 16px rgba(0, 0, 0, 0.4)",
             "display": "flex",  # Use flexbox for the container
             "flexDirection": "column",  # Ensure vertical layout
         },
-        className="m-2 border border-danger",
+        className="m-2",  # border border-danger",
     )
 
 
@@ -183,11 +183,7 @@ def col(children, bg_color="#002147"):
 
 
 def upper_box(children):
-    return html.Div(
-        children,
-        style={"height": "100px"},
-        className="m-2 border border-light",
-    )
+    return html.Div(children, style={"height": "100px"}, className="m-2")  # border border-light",
 
 
 def flex_div(children):
@@ -202,16 +198,12 @@ def flex_div(children):
             "justifyContent": "center",  # Center the content vertically
             # "alignItems": "center",  # Center the content horizontally
         },
-        className="m-2 border border-success",
+        className="m-2",  # border border-success",
     )
 
 
 def lower_box(children):
-    return html.Div(
-        children,
-        style={"height": "50px"},
-        className="m-2 border border-light",
-    )
+    return html.Div(children, style={"height": "50px"}, className="m-2")  # border border-light",
 
 
 dropdown_style = {
@@ -221,17 +213,31 @@ dropdown_style = {
 }
 
 word_dropdown = dbc.Row(
-    dbc.Col(
-        dcc.Dropdown(
-            id="word-dropdown",
-            options=word_list,
-            value="derivatives",
-            clearable=False,
-            style=dropdown_style,
+    [
+        dbc.Col(
+            html.Label(
+                "Word:",
+                style={
+                    "fontSize": text_font_size,
+                    "fontFamily": text_font,
+                    "marginRight": "0px",  # Space between label and dropdown
+                },
+            ),
+            width="auto",
         ),
-        width=6,
-    ),
+        dbc.Col(
+            dcc.Dropdown(
+                id="word-dropdown",
+                options=word_list,
+                value="derivatives",
+                clearable=False,
+                style=dropdown_style,
+            ),
+            width=6,
+        ),
+    ],
     justify="center",
+    align="center",  # Align label and dropdown vertically
     className="mt-4 mb-2",
 )
 
@@ -318,12 +324,19 @@ left_col = col(
     [
         upper_box(
             [
-                html.H2("Word Embedding"),
-                html.P("Some sentences"),
+                html.H3("Word Embeddings", style={"color": "#002147", "textAlign": "center"}),
+                html.P(
+                    [
+                        "Visualize how word embeddings and their relationships evolve across different years.",
+                        html.Br(),
+                        "Drag to rotate the chart and scroll to zoom.",
+                    ],
+                    style={"color": "#002147", "textAlign": "center"},
+                ),
             ]
         ),
         flex_div(graph),
-        lower_box(""),
+        lower_box(html.P("Data Source: The word embeddings are trained from the New York Times (1987-2006).", style={"color": "#002147"})),
     ],
     bg_color="#B9D6F2",
 )
@@ -350,7 +363,7 @@ data_table = dash.dash_table.DataTable(
         "textAlign": "center",
         "fontFamily": text_font,
         "fontSize": text_font_size,
-        "padding": "5px",  # Increase padding to increase row height
+        "padding": "1px",  # Increase padding to increase row height
         "width": "33.33%",  # Make all columns equal width"
     },
     style_header={
@@ -375,11 +388,27 @@ data_table = dash.dash_table.DataTable(
 # Update the right_col to include the color dropdowns and conditional styling for the table
 right_col = col(
     [
-        upper_box([html.H2("Most Similar Words", style={"color": "white"}), html.P("How they change over time", style={"color": "white"})]),
+        upper_box(
+            [
+                html.H3("Most Similar Words", style={"color": "white", "textAlign": "center"}),
+                html.P(
+                    [
+                        "Choose a word and a model to see how its most similar words have evolved.",
+                        html.Br(),
+                        "Use the dropdowns to customize the visualization.",
+                    ],
+                    style={"color": "white", "textAlign": "center"},
+                ),
+            ]
+        ),
         flex_div([word_dropdown, sg_radio]),
         color_dropdowns,  # Add the color dropdowns here
         dbc.Spinner(data_table, color="light"),
-        lower_box(""),
+        lower_box(
+            html.P(
+                "This application uses Word2Vec models and Dash to provide an interactive exploration of word embeddings.", style={"color": "white"}
+            )
+        ),
     ],
 )
 
