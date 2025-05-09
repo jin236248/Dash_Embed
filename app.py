@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import Dash, Input, Output, dcc, html
-from gensim.models import Word2Vec
+from gensim.models import KeyedVectors, Word2Vec
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
@@ -17,18 +17,18 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 # Load word list
 def load_word_list():
     # load common_word.txt
-    with open("app/data/common_word.txt") as f:
+    with open("data/common_word.txt") as f:
         word_list = f.read().splitlines()
     return word_list
 
-    # with open("app/data/word_list.json") as f:
+    # with open("data/word_list.json") as f:
     #     word_list = json.load(f)
     # return word_list
 
 
 def load_model(year, sg):
-    model_path = f"app/models/sg{sg}/{year}_e10.model"
-    model = Word2Vec.load(model_path)
+    model_path = f"models/sg{sg}/{year}_e10.kv"
+    model = KeyedVectors.load(model_path)
     return model
 
 
@@ -36,7 +36,7 @@ def get_models_and_similar_words(selected_word, years, sg, topn):
     models, similar_words = {}, {}
     for year in years:
         models[year] = load_model(year, sg)
-        similar_words[year] = [word for word, sim in models[year].wv.most_similar(selected_word, topn=topn)]
+        similar_words[year] = [word for word, sim in models[year].most_similar(selected_word, topn=topn)]
 
     return models, similar_words
 
@@ -46,12 +46,12 @@ def get_all_embeddings(models, similar_words, selected_word, years, weight):
 
     # main word
     for year in years:
-        all_embeddings.extend([models[year].wv[selected_word]] * weight)
+        all_embeddings.extend([models[year][selected_word]] * weight)
 
     # similar words
     for year in years:
         for word in similar_words[year]:
-            all_embeddings.append(models[year].wv[word])
+            all_embeddings.append(models[year][word])
 
     return all_embeddings
 
