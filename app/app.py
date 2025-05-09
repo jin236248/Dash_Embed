@@ -154,36 +154,101 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 # Layout of the app
 word_list = load_word_list()
 font_size = 12  # initial font size, after one callback it will be set to 25 and the bug in the font size will be fixed
+text_font_size = 18
+text_font = "Verdana"
 
 
-def div(children):
-    return html.Div(children, style={"height": "90%", "minHeight": "600px"})
+def div(children, bg_color):
+    return html.Div(
+        children,
+        style={
+            "height": "100%",
+            "minHeight": "600px",
+            "backgroundColor": bg_color,
+            "borderRadius": "15px",
+            "boxShadow": "0 8px 16px rgba(0, 0, 0, 0.4)",
+            "display": "flex",  # Use flexbox for the container
+            "flexDirection": "column",  # Ensure vertical layout
+        },
+        className="m-2 border border-danger",
+    )
 
 
-def col(children):
-    return dbc.Col(div(children), width=6, style={"minWidth": "600px"})
+def col(children, bg_color="#002147"):
+    return dbc.Col(
+        div(children, bg_color),
+        width=6,
+        style={"minWidth": "600px"},
+    )
 
 
-left_col = col(
-    [
-        html.H2("Word Embedding"),
-        html.P("Some sentences"),
-        dcc.Dropdown(id="word-dropdown", options=word_list, value="derivatives", clearable=False),
-        dcc.Graph(id="3d-scatter-chart", style={"height": "100%"}),
-    ],
+def upper_box(children):
+    return html.Div(
+        children,
+        style={"height": "100px"},
+        className="m-2 border border-light",
+    )
+
+
+def flex_div(children):
+    return html.Div(
+        children,
+        style={
+            "flex": "1",
+            "borderRadius": "15px",
+            "backgroundColor": "white",
+            "display": "flex",  # Use flexbox for the graph container
+            "flexDirection": "column",  # Ensure vertical layout
+            "justifyContent": "center",  # Center the content vertically
+            # "alignItems": "center",  # Center the content horizontally
+        },
+        className="m-2 border border-success",
+    )
+
+
+def lower_box(children):
+    return html.Div(
+        children,
+        style={"height": "50px"},
+        className="m-2 border border-light",
+    )
+
+
+dropdown_style = {
+    "borderRadius": "30px",
+    "fontSize": text_font_size,
+    "fontFamily": text_font,
+}
+
+word_dropdown = dbc.Row(
+    dbc.Col(
+        dcc.Dropdown(
+            id="word-dropdown",
+            options=word_list,
+            value="derivatives",
+            clearable=False,
+            style=dropdown_style,
+        ),
+        width=6,
+    ),
+    justify="center",
+    className="mt-4 mb-4",
 )
 
 # Add color options for the dropdowns
-color_options = [
-    {"label": html.Span(["Red"], style={"color": "red"}), "value": "red"},
-    {"label": html.Span(["Green"], style={"color": "green"}), "value": "green"},
-    {"label": html.Span(["Blue"], style={"color": "blue"}), "value": "blue"},
-    {"label": html.Span(["Orange"], style={"color": "orange"}), "value": "orange"},
-    {"label": html.Span(["Purple"], style={"color": "purple"}), "value": "purple"},
-    {"label": html.Span(["Black"], style={"color": "black"}), "value": "black"},
+colors = [
+    ("#ea5545", "Red"),
+    ("#f46a9b", "Pink"),
+    ("#ef9b20", "Orange"),
+    ("#edbf33", "Amber"),
+    ("#ede15b", "Yellow"),
+    ("#bdcf32", "Olive"),
+    ("#87bc45", "Green"),
+    ("#27aeef", "Blue"),
+    ("#b33dc6", "Purple"),
 ]
+color_options = [{"label": html.Span([c[1]], style={"color": c[0]}), "value": c[0]} for c in colors]
 
-# Add dropdowns for selecting colors for each year
 color_dropdowns = dbc.Row(
     [
         dbc.Col(
@@ -192,8 +257,9 @@ color_dropdowns = dbc.Row(
                 dcc.Dropdown(
                     id="color-1987-dropdown",
                     options=color_options,
-                    value="red",  # Default color
+                    value="#ea5545",  # Default color
                     clearable=False,
+                    style=dropdown_style,
                 ),
             ],
         ),
@@ -203,8 +269,9 @@ color_dropdowns = dbc.Row(
                 dcc.Dropdown(
                     id="color-1997-dropdown",
                     options=color_options,
-                    value="green",  # Default color
+                    value="#87bc45",  # Default color
                     clearable=False,
+                    style={"borderRadius": "30px", "fontSize": text_font_size, "fontFamily": text_font},
                 ),
             ],
         ),
@@ -214,55 +281,88 @@ color_dropdowns = dbc.Row(
                 dcc.Dropdown(
                     id="color-2006-dropdown",
                     options=color_options,
-                    value="blue",  # Default color
+                    value="#27aeef",  # Default color
                     clearable=False,
+                    style={"borderRadius": "30px", "fontSize": text_font_size, "fontFamily": text_font},
                 ),
             ],
         ),
     ],
-    className="g-0",
+    className="m-2 g-2",
 )
 
+graph = dcc.Graph(
+    id="3d-scatter-chart",
+    style={"height": "90%"},
+    className="m-2",
+)
+
+left_col = col(
+    [
+        upper_box(
+            [
+                html.H2("Word Embedding"),
+                html.P("Some sentences"),
+            ]
+        ),
+        flex_div(graph),
+        lower_box(""),
+    ],
+    bg_color="#B9D6F2",
+)
+
+
+data_table = dash.dash_table.DataTable(
+    id="similar-words-table",
+    columns=[
+        {"name": "1987", "id": "1987"},
+        {"name": "1997", "id": "1997"},
+        {"name": "2006", "id": "2006"},
+        {"name": "1987_isunique", "id": "1987_isunique"},
+        {"name": "1997_isunique", "id": "1997_isunique"},
+        {"name": "2006_isunique", "id": "2006_isunique"},
+    ],
+    style_table={
+        "border": "1px solid #B0B0B0",  # Grey border
+        "borderRadius": "20px",  # Adjust for rounder effect
+        "overflow": "hidden",  # Prevents clipped corners if needed
+        "margin": "8px",
+        "width": "97%",
+    },
+    style_cell={
+        "textAlign": "center",
+        "fontFamily": text_font,
+        "fontSize": text_font_size,
+        "padding": "15px",  # Increase padding to increase row height
+        "width": "33.33%",  # Make all columns equal width"
+    },
+    style_header={
+        "fontWeight": "bold",  # Make the header bold
+        "textAlign": "center",
+        "fontFamily": text_font,
+        "fontSize": text_font_size,
+        "backgroundColor": "#f8f9fa",  # Optional: Add a light background color for the header
+    },
+    style_data_conditional=[],  # This will be dynamically updated in the callback
+    style_header_conditional=[
+        {"if": {"column_id": "1987_isunique"}, "display": "none"},
+        {"if": {"column_id": "1997_isunique"}, "display": "none"},
+        {"if": {"column_id": "2006_isunique"}, "display": "none"},
+    ],
+    style_cell_conditional=[
+        {"if": {"column_id": "1987_isunique"}, "display": "none"},
+        {"if": {"column_id": "1997_isunique"}, "display": "none"},
+        {"if": {"column_id": "2006_isunique"}, "display": "none"},
+    ],
+)
 # Update the right_col to include the color dropdowns and conditional styling for the table
 right_col = col(
     [
-        html.H2("Most Similar Words"),
-        html.P("How they change over time"),
+        upper_box([html.H2("Most Similar Words", style={"color": "white"}), html.P("How they change over time", style={"color": "white"})]),
+        flex_div(word_dropdown),
         color_dropdowns,  # Add the color dropdowns here
-        dbc.Spinner(
-            [
-                dash.dash_table.DataTable(
-                    id="similar-words-table",
-                    columns=[
-                        {"name": "1987", "id": "1987"},
-                        {"name": "1997", "id": "1997"},
-                        {"name": "2006", "id": "2006"},
-                        {"name": "1987_isunique", "id": "1987_isunique"},
-                        {"name": "1997_isunique", "id": "1997_isunique"},
-                        {"name": "2006_isunique", "id": "2006_isunique"},
-                    ],
-                    style_cell={
-                        "textAlign": "center",
-                        "fontFamily": "Arial",
-                        "width": "33.33%",  # Make all columns equal width"
-                    },
-                    style_data_conditional=[],  # This will be dynamically updated in the callback
-                    style_header_conditional=[
-                        {"if": {"column_id": "1987_isunique"}, "display": "none"},
-                        {"if": {"column_id": "1997_isunique"}, "display": "none"},
-                        {"if": {"column_id": "2006_isunique"}, "display": "none"},
-                    ],
-                    style_cell_conditional=[
-                        {"if": {"column_id": "1987_isunique"}, "display": "none"},
-                        {"if": {"column_id": "1997_isunique"}, "display": "none"},
-                        {"if": {"column_id": "2006_isunique"}, "display": "none"},
-                    ],
-                ),
-            ],
-            color="primary",  # Spinner color
-            type="border",  # Spinner type
-            fullscreen=False,  # Spinner will not cover the entire screen
-        ),
+        dbc.Spinner(data_table, color="light"),
+        lower_box(""),
     ],
 )
 
@@ -271,8 +371,11 @@ app.layout = html.Div(
         dbc.Row(
             [left_col, right_col],
             justify="center",
-            style={"height": "95vh", "minHeight": "600px"},
-            className="border border-1",
+            style={
+                "height": "90vh",
+                "minHeight": "600px",
+            },
+            className="g-2",
         ),
     ],
 )
