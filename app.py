@@ -150,6 +150,7 @@ def create_fig(df, reduced_embed, selected_word, years, weight, font_size):
 
 # Initialize the Dash app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
 
 # Layout of the app
 word_list = load_word_list()
@@ -531,4 +532,4 @@ def update_scatter(selected_word, sg, color_1987, color_1997, color_2006):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
