@@ -54,5 +54,5 @@ The app will be available at [http://127.0.0.1:8050/](http://127.0.0.1:8050/).
 
 ## Acknowledgements
 
-- Embeddings trained from the New York Times Annotated Corpus.
+- Embeddings trained from the New York Times Annotated Corpus. Due to licensing restrictions, we cannot publish the trained model derived from this corpus without proper permission. The code in this repository solely demonstrates the interface and functionality of the application.
 - Built with [Dash](https://dash.plotly.com/) and [Plotly](https://plotly.com/python/).
