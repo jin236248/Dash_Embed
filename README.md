@@ -38,23 +38,6 @@ python app.py
 The app will be available at [http://127.0.0.1:8050/](http://127.0.0.1:8050/).
 
 
-## Project Structure
-
-```
-Dash_Embed/
-├── app.py
-├── requirements.txt
-├── Procfile
-├── runtime.txt
-├── assets/
-│   └── github.png
-├── models/
-│   ├── sg0/
-│   └── sg1/
-├── data/
-│   └── common_word.txt
-```
-
 ## Acknowledgements
 
 - Embeddings trained from the New York Times corpus.
