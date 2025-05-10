@@ -4,11 +4,10 @@ A Dash web application for visualizing the evolution of word embeddings and thei
 
 ## Features
 
-- **3D Scatter Plot**: Visualize the trajectory of a selected word and its most similar words across three decades (1987, 1997, 2006).
+- **3D Scatter Plot**: Visualize the trajectory of a selected word and its most similar words across two decades (1987, 1997, 2006).
 - **Interactive Table**: Compare the top similar words for each year and highlight unique words per year.
 - **Customizable Colors**: Change the color scheme for each year using dropdowns.
 - **Model Selection**: Switch between Continuous Bag of Words (CBOW) and Skip-Gram (SG) models.
-- **Responsive Layout**: Built with Dash and Bootstrap for a modern, responsive UI.
 
 ## Getting Started
 
