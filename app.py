@@ -155,7 +155,7 @@ server = app.server
 # Layout of the app
 word_list = load_word_list()
 font_size = 12  # initial font size, after one callback it will be set to 25 and the bug in the font size will be fixed
-text_font_size = 15
+text_font_size = 14
 text_font = "Verdana"
 
 
@@ -204,7 +204,7 @@ def flex_div(children):
 
 
 def lower_box(children):
-    return html.Div(children, style={"height": "25px"}, className="m-2")  # border border-light",
+    return html.Div(children, style={"height": "25px"}, className="m-2 ms-3 me-3")  # border border-light",
 
 
 dropdown_style = {
@@ -340,12 +340,19 @@ left_col = col(
                         html.Br(),
                         "Drag to rotate the chart and scroll to zoom.",
                     ],
-                    style={"color": "#002147", "textAlign": "center"},
+                    style={"color": "#002147", "textAlign": "center", "fontSize": text_font_size, "fontFamily": text_font},
                 ),
             ]
         ),
         flex_div(graph),
-        lower_box(html.P("Data Source: The embeddings are trained from the New York Times corpus.", style={"color": "#002147"})),
+        lower_box(
+            html.P(
+                [
+                    "Data Source: The embeddings are trained from the New York Times corpus.",
+                ],
+                style={"color": "#002147", "textAlign": "left", "fontSize": text_font_size, "fontFamily": text_font},
+            )
+        ),
     ],
     bg_color="#B9D6F2",
 )
@@ -433,7 +440,7 @@ right_col = col(
                         ". ",
                         "They highlight social and economic shifts over the two decades.",
                     ],
-                    style={"color": "white", "textAlign": "center"},
+                    style={"color": "white", "textAlign": "center", "fontSize": text_font_size, "fontFamily": text_font},
                 ),
             ]
         ),
@@ -443,9 +450,30 @@ right_col = col(
         lower_box(
             html.P(
                 [
-                    "This app uses Word2Vec and Dash for interactive word exploration.",
+                    "Source code",
+                    html.A(
+                        html.Img(
+                            src="/assets/github_white.png",
+                            alt="GitHub",
+                            style={"height": "18px", "verticalAlign": "middle", "marginRight": "4px", "marginLeft": "8px"},
+                        ),
+                        href="https://github.com/jin236248/Dash_Embed",
+                        target="_blank",
+                        style={"textDecoration": "none"},
+                    ),
+                    html.A(
+                        "Dash_Embed",
+                        href="https://github.com/jin236248/Dash_Embed",
+                        target="_blank",
+                        style={
+                            "color": "white",
+                            "fontWeight": "bold",
+                            "textDecoration": "underline",
+                            "marginLeft": "4px",
+                        },
+                    ),
                 ],
-                style={"color": "white"},
+                style={"color": "white", "textAlign": "right", "fontSize": text_font_size, "fontFamily": text_font},
             )
         ),
     ],
