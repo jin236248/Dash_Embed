@@ -29,6 +29,20 @@ A Dash web application for visualizing the evolution of word embeddings and thei
     pip install -r requirements.txt
     ```
 
+3. **Prepare models and data:**
+    - **Models:** Place your trained `.kv` embedding models in the `models/sg0/` and `models/sg1/` folders.  
+      ```
+      models/
+        sg0/
+          1987_e10.kv
+          1997_e10.kv
+          2006_e10.kv
+        sg1/
+          1987_e10.kv
+          1997_e10.kv
+          2006_e10.kv
+      ```
+
 ### Running the App
 
 ```bash
@@ -40,5 +54,5 @@ The app will be available at [http://127.0.0.1:8050/](http://127.0.0.1:8050/).
 
 ## Acknowledgements
 
-- Embeddings trained from the New York Times corpus.
+- Embeddings trained from the New York Times Annotated Corpus.
 - Built with [Dash](https://dash.plotly.com/) and [Plotly](https://plotly.com/python/).

@@ -348,7 +348,7 @@ left_col = col(
         lower_box(
             html.P(
                 [
-                    "Data Source: The embeddings are trained from the New York Times corpus.",
+                    "The embeddings are trained from the New York Times Annotated Corpus.",
                 ],
                 style={"color": "#002147", "textAlign": "left", "fontSize": text_font_size, "fontFamily": text_font},
             )
