@@ -184,7 +184,7 @@ def col(children, bg_color="#002147"):
 
 
 def upper_box(children):
-    return html.Div(children, style={"height": "100px"}, className="m-2")  # border border-light",
+    return html.Div(children, style={"height": "125px"}, className="m-2")  # border border-light",
 
 
 def flex_div(children):
@@ -204,7 +204,7 @@ def flex_div(children):
 
 
 def lower_box(children):
-    return html.Div(children, style={"height": "50px"}, className="m-2")  # border border-light",
+    return html.Div(children, style={"height": "25px"}, className="m-2")  # border border-light",
 
 
 dropdown_style = {
@@ -325,10 +325,18 @@ left_col = col(
     [
         upper_box(
             [
-                html.H3("Word Embeddings", style={"color": "#002147", "textAlign": "center"}),
+                html.H2(
+                    "Word Embeddings",
+                    style={
+                        "color": "#002147",
+                        "textAlign": "center",
+                        "fontWeight": 900,  # Increased bold weight
+                    },
+                    className="mt-2",
+                ),
                 html.P(
                     [
-                        "Visualize how word embeddings and their relationships evolve across different years.",
+                        "Visualize the evolution of the selected word and its closest words.",
                         html.Br(),
                         "Drag to rotate the chart and scroll to zoom.",
                     ],
@@ -337,7 +345,7 @@ left_col = col(
             ]
         ),
         flex_div(graph),
-        lower_box(html.P("Data Source: The word embeddings are trained from the New York Times (1987-2006).", style={"color": "#002147"})),
+        lower_box(html.P("Data Source: The embeddings are trained from the New York Times corpus.", style={"color": "#002147"})),
     ],
     bg_color="#B9D6F2",
 )
@@ -391,12 +399,39 @@ right_col = col(
     [
         upper_box(
             [
-                html.H3("Most Similar Words", style={"color": "white", "textAlign": "center"}),
+                html.H2(
+                    "Most Similar Words",
+                    style={
+                        "color": "white",
+                        "textAlign": "center",
+                        "fontWeight": 900,  # Increased bold weight
+                    },
+                    className="mt-2",
+                ),
                 html.P(
                     [
-                        "Choose a word and a model to see how its most similar words have evolved.",
-                        html.Br(),
-                        "Use the dropdowns to customize the visualization.",
+                        # "Select a word and model, then adjust the color using the dropdowns.",
+                        # html.Br(),
+                        "Try: ",
+                        html.B("derivatives"),
+                        ", ",
+                        html.B("bubble"),
+                        ", ",
+                        html.B("underwriting"),
+                        ", ",
+                        html.B("leveraged"),
+                        ", ",
+                        html.B("networking"),
+                        ", ",
+                        html.B("hybrid"),
+                        ", ",
+                        html.B("globalization"),
+                        ", ",
+                        html.B("nasdaq"),
+                        ", and ",
+                        html.B("options"),
+                        ". ",
+                        "They highlight social and economic shifts over the two decades.",
                     ],
                     style={"color": "white", "textAlign": "center"},
                 ),
@@ -407,7 +442,10 @@ right_col = col(
         dbc.Spinner(data_table, color="light"),
         lower_box(
             html.P(
-                "This application uses Word2Vec models and Dash to provide an interactive exploration of word embeddings.", style={"color": "white"}
+                [
+                    "This app uses Word2Vec and Dash for interactive word exploration.",
+                ],
+                style={"color": "white"},
             )
         ),
     ],
@@ -532,4 +570,4 @@ def update_scatter(selected_word, sg, color_1987, color_1997, color_2006):
 
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)
