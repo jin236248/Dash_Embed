@@ -88,7 +88,7 @@ def prepare_df(selected_word, reduced_embed, similar_words, years, weight):
                     {"x": reduced_embed[index][0], "y": reduced_embed[index][1], "z": reduced_embed[index][2], "word": word, "year": year, "size": 1}
                 )
                 all_similar_words.append(word)
-                index += 1
+            index += 1
 
     df = pd.DataFrame(data)
     return df
@@ -594,4 +594,4 @@ def update_scatter(selected_word, sg, color_1987, color_1997, color_2006):
 
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)
