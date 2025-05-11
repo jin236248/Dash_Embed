@@ -98,15 +98,6 @@ def create_fig(df, reduced_embed, selected_word, years, weight, font_size):
 
     fig = px.scatter_3d(df, x="x", y="y", z="z", color="year", text="word", size="size")
 
-    # Manually update the colors for each year
-    custom_colors = {
-        "1987": "red",
-        "1997": "green",
-        "2006": "blue",
-    }
-    for year, color in custom_colors.items():
-        fig.for_each_trace(lambda trace: trace.update(marker=dict(color=color)) if trace.name == year else None)
-
     fig.update_traces(textposition="top center", textfont=dict(size=font_size))
     fig.update_layout(
         scene=dict(camera=dict(eye=dict(x=0.5, y=0.5, z=0.5))),
@@ -554,8 +545,8 @@ def update_scatter(selected_word, sg, color_1987, color_1997, color_2006):
 
     # Preprocess the data to determine which words are unique to each column
     unique_1987 = set(similar_words["1987"]) - set(similar_words["1997"]) - set(similar_words["2006"])
-    unique_1997 = set(similar_words["1997"]) - set(similar_words["1987"])
-    unique_2006 = set(similar_words["2006"]) - set(similar_words["1987"])
+    unique_1997 = set(similar_words["1997"]) - set(similar_words["1987"]) - set(similar_words["2006"])
+    unique_2006 = set(similar_words["2006"]) - set(similar_words["1987"]) - set(similar_words["1997"])
 
     for i in range(topn):
         row = {
