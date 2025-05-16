@@ -34,13 +34,13 @@ A Dash web application for visualizing the evolution of word embeddings and thei
       ```
       models/
         sg0/
-          1987_e10.kv
-          1997_e10.kv
-          2006_e10.kv
+          1987.kv
+          1997.kv
+          2006.kv
         sg1/
-          1987_e10.kv
-          1997_e10.kv
-          2006_e10.kv
+          1987.kv
+          1997.kv
+          2006.kv
       ```
 
 ### Running the App
