@@ -17,18 +17,6 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 # helper functions
 
 
-# Load word list
-# def load_word_list():
-#     # load common_word.txt
-#     with open("data/common_word.txt") as f:
-#         word_list = f.read().splitlines()
-#     return word_list
-
-# with open("data/word_list.json") as f:
-#     word_list = json.load(f)
-# return word_list
-
-
 def get_years_from_models():
 
     def get_years(model_dir):
@@ -57,12 +45,6 @@ def get_years_from_models():
     if years_sg0 != years_sg1:
         return "The years in sg0 and sg1 models do not match."
     return years_sg0
-
-
-# def load_model(year, sg):
-#     model_path = f"models/sg{sg}/{year}_e10.kv"
-#     model = KeyedVectors.load(model_path)
-#     return model
 
 
 def load_models(years):
@@ -105,9 +87,6 @@ def create_error_modal(messages):
                     )
                 ]
             ),
-            # dbc.ModalFooter(
-            #     dbc.Button("Close", id="close-error-modal", className="ml-auto")
-            # ),
         ],
         id="error-modal",
         is_open=True,
