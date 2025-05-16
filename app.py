@@ -1,4 +1,6 @@
 import json
+import os
+import re
 
 import dash
 import dash_auth
@@ -7,7 +9,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from dash import Dash, Input, Output, dcc, html
+from dash import Dash, Input, Output, dcc, html, no_update
 from gensim.models import KeyedVectors, Word2Vec
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
@@ -16,33 +18,111 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 # Load word list
-def load_word_list():
-    # load common_word.txt
-    with open("data/common_word.txt") as f:
-        word_list = f.read().splitlines()
-    return word_list
+# def load_word_list():
+#     # load common_word.txt
+#     with open("data/common_word.txt") as f:
+#         word_list = f.read().splitlines()
+#     return word_list
 
-    # with open("data/word_list.json") as f:
-    #     word_list = json.load(f)
-    # return word_list
-
-
-def load_model(year, sg):
-    model_path = f"models/sg{sg}/{year}_e10.kv"
-    model = KeyedVectors.load(model_path)
-    return model
+# with open("data/word_list.json") as f:
+#     word_list = json.load(f)
+# return word_list
 
 
-def get_models_and_similar_words(selected_word, years, sg, topn):
-    models, similar_words = {}, {}
-    for year in years:
-        models[year] = load_model(year, sg)
-        similar_words[year] = [word for word, sim in models[year].most_similar(selected_word, topn=topn)]
+def get_years_from_models():
 
-    return models, similar_words
+    def get_years(model_dir):
+        year_pattern = re.compile(r"(\d{4})\.kv$")
+        years = []
+        for fname in os.listdir(model_dir):
+            if fname.endswith(".kv"):
+                match = year_pattern.match(fname)
+                if match:
+                    years.append(match.group(1))
+                else:
+                    return "Invalid file name format"
+        # make sure the number of models is 3
+        if len(years) != 3:
+            return f"Number of models in {model_dir} is not 3"
+        return sorted(years, reverse=True)
+
+    years_sg0 = get_years("models/sg0")
+    if isinstance(years_sg0, str):
+        return years_sg0
+
+    years_sg1 = get_years("models/sg1")
+    if isinstance(years_sg1, str):
+        return years_sg1
+
+    if years_sg0 != years_sg1:
+        return "The years in sg0 and sg1 models do not match."
+    return years_sg0
+
+
+# def load_model(year, sg):
+#     model_path = f"models/sg{sg}/{year}_e10.kv"
+#     model = KeyedVectors.load(model_path)
+#     return model
+
+
+def load_models(years):
+    models = {}
+    for sg in ["0", "1"]:
+        models[sg] = {}
+        for year in years:
+            model_path = f"models/sg{sg}/{year}.kv"
+            try:
+                models[sg][year] = KeyedVectors.load(model_path)
+            except Exception as e:
+                return f"Error loading model for year {year} and sg {sg}: {e}"
+    return models
+
+
+def get_word_list(models):
+    try:
+        vocab = set(models["0"][years[0]].key_to_index.keys())
+    except AttributeError:
+        return f"Error loading vocab for year {years[0]} in sg0."
+
+    # Check if models have same vocabulary
+    for sg in ["0", "1"]:
+        for year in years:
+            if set(models[sg][year].key_to_index.keys()) != vocab:
+                return f"Vocabulary mismatch in models for year {year} in sg{sg}."
+
+    return sorted(list(vocab))
+
+
+def create_error_modal(messages):
+    return dbc.Modal(
+        [
+            dbc.ModalHeader("Error", close_button=True),
+            dbc.ModalBody(
+                [
+                    html.Ul(
+                        html.Li(messages[0]),
+                        style={"listStyleType": "none", "padding": "0"},
+                    )
+                ]
+            ),
+            # dbc.ModalFooter(
+            #     dbc.Button("Close", id="close-error-modal", className="ml-auto")
+            # ),
+        ],
+        id="error-modal",
+        is_open=True,
+    )
+
+
+def get_similar_words(selected_word, models, years, sg, topn):
+    similar_words = {}
+    for year, key in zip(years, keys):
+        similar_words[key] = [word for word, sim in models[sg][year].most_similar(selected_word, topn=topn)]
+    return similar_words
 
 
 def get_all_embeddings(models, similar_words, selected_word, years, weight):
+    # models is already [sg] in this function
     all_embeddings = []
 
     # main word
@@ -50,8 +130,8 @@ def get_all_embeddings(models, similar_words, selected_word, years, weight):
         all_embeddings.extend([models[year][selected_word]] * weight)
 
     # similar words
-    for year in years:
-        for word in similar_words[year]:
+    for year, key in zip(years, keys):
+        for word in similar_words[key]:
             all_embeddings.append(models[year][word])
 
     return all_embeddings
@@ -81,8 +161,8 @@ def prepare_df(selected_word, reduced_embed, similar_words, years, weight):
 
     # Add similar words to the plot
     all_similar_words = []
-    for year in years:
-        for word in similar_words[year]:
+    for year, key in zip(years, keys):
+        for word in similar_words[key]:
             if word not in all_similar_words:
                 data.append(
                     {"x": reduced_embed[index][0], "y": reduced_embed[index][1], "z": reduced_embed[index][2], "word": word, "year": year, "size": 1}
@@ -149,10 +229,37 @@ USERNAME_PASSWORD_PAIRS = [["digitalscholarship", "2025"]]
 auth = dash_auth.BasicAuth(app, USERNAME_PASSWORD_PAIRS)
 
 # Layout of the app
-word_list = load_word_list()
 font_size = 12  # initial font size, after one callback it will be set to 25 and the bug in the font size will be fixed
 text_font_size = 14
 text_font = "Verdana"
+
+# Error messages
+error_messages = []
+
+# Get years from models
+years = get_years_from_models()
+keys = ["3", "2", "1"]
+if isinstance(years, str):
+    error_messages.append(years)
+    years = ["2006", "1997", "1987"]  # Default years if the model loading fails
+
+# Load models
+models = load_models(years)
+if isinstance(models, str):
+    error_messages.append(models)
+    models = {}  # Default models if the model loading fails
+# Check if all models have same vocabulary
+word_list = []
+if len(models) > 0:
+    word_list = get_word_list(models)
+    if isinstance(word_list, str):
+        error_messages.append(word_list)
+        word_list = []
+
+# Set default word
+default_word = None
+if word_list:
+    default_word = word_list[0] if "derivatives" not in word_list else "derivatives"
 
 
 def div(children, bg_color):
@@ -226,7 +333,7 @@ word_dropdown = dbc.Row(
             dcc.Dropdown(
                 id="word-dropdown",
                 options=word_list,
-                value="derivatives",
+                value=default_word,
                 clearable=False,
                 style=dropdown_style,
             ),
@@ -243,10 +350,10 @@ sg_radio = dbc.Row(
         dcc.RadioItems(
             id="sg-radio",
             options=[
-                {"label": "Continuous Bag of Words (CBOW)", "value": 0},
-                {"label": "Skip-Gram (SG)", "value": 1},
+                {"label": "Continuous Bag of Words (CBOW)", "value": "0"},
+                {"label": "Skip-Gram (SG)", "value": "1"},
             ],
-            value=0,  # Default to CBOW
+            value="0",  # Default to CBOW
             inline=True,  # Display options horizontally
             style={"fontSize": text_font_size, "fontFamily": text_font},
             inputStyle={"marginRight": "10px"},  # Add space between the radio button and label
@@ -277,7 +384,7 @@ color_dropdowns = dbc.Row(
         dbc.Col(
             [
                 dcc.Dropdown(
-                    id="color-1987-dropdown",
+                    id="color-1-dropdown",
                     options=color_options,
                     value="#ea5545",  # Default color
                     clearable=False,
@@ -288,7 +395,7 @@ color_dropdowns = dbc.Row(
         dbc.Col(
             [
                 dcc.Dropdown(
-                    id="color-1997-dropdown",
+                    id="color-2-dropdown",
                     options=color_options,
                     value="#87bc45",  # Default color
                     clearable=False,
@@ -299,7 +406,7 @@ color_dropdowns = dbc.Row(
         dbc.Col(
             [
                 dcc.Dropdown(
-                    id="color-2006-dropdown",
+                    id="color-3-dropdown",
                     options=color_options,
                     value="#27aeef",  # Default color
                     clearable=False,
@@ -357,12 +464,12 @@ left_col = col(
 data_table = dash.dash_table.DataTable(
     id="similar-words-table",
     columns=[
-        {"name": "1987", "id": "1987"},
-        {"name": "1997", "id": "1997"},
-        {"name": "2006", "id": "2006"},
-        {"name": "1987_isunique", "id": "1987_isunique"},
-        {"name": "1997_isunique", "id": "1997_isunique"},
-        {"name": "2006_isunique", "id": "2006_isunique"},
+        {"name": years[2], "id": "1"},
+        {"name": years[1], "id": "2"},
+        {"name": years[0], "id": "3"},
+        {"name": "1_isunique", "id": "1_isunique"},
+        {"name": "2_isunique", "id": "2_isunique"},
+        {"name": "3_isunique", "id": "3_isunique"},
     ],
     style_table={
         "border": "1px solid #B0B0B0",  # Grey border
@@ -387,14 +494,14 @@ data_table = dash.dash_table.DataTable(
     },
     style_data_conditional=[],  # This will be dynamically updated in the callback
     style_header_conditional=[
-        {"if": {"column_id": "1987_isunique"}, "display": "none"},
-        {"if": {"column_id": "1997_isunique"}, "display": "none"},
-        {"if": {"column_id": "2006_isunique"}, "display": "none"},
+        {"if": {"column_id": "1_isunique"}, "display": "none"},
+        {"if": {"column_id": "2_isunique"}, "display": "none"},
+        {"if": {"column_id": "3_isunique"}, "display": "none"},
     ],
     style_cell_conditional=[
-        {"if": {"column_id": "1987_isunique"}, "display": "none"},
-        {"if": {"column_id": "1997_isunique"}, "display": "none"},
-        {"if": {"column_id": "2006_isunique"}, "display": "none"},
+        {"if": {"column_id": "1_isunique"}, "display": "none"},
+        {"if": {"column_id": "2_isunique"}, "display": "none"},
+        {"if": {"column_id": "3_isunique"}, "display": "none"},
     ],
 )
 # Update the right_col to include the color dropdowns and conditional styling for the table
@@ -486,6 +593,7 @@ app.layout = html.Div(
             },
             className="g-2",
         ),
+        html.Div(id="error-modal-container"),  # Placeholder for error modal
     ],
 )
 
@@ -496,31 +604,35 @@ app.layout = html.Div(
         Output("3d-scatter-chart", "figure"),
         Output("similar-words-table", "data"),
         Output("similar-words-table", "style_data_conditional"),
+        Output("error-modal-container", "children"),  # Output for the error modal
     ],
     [
         Input("word-dropdown", "value"),
         Input("sg-radio", "value"),  # Add the radio button input
-        Input("color-1987-dropdown", "value"),
-        Input("color-1997-dropdown", "value"),
-        Input("color-2006-dropdown", "value"),
+        Input("color-1-dropdown", "value"),
+        Input("color-2-dropdown", "value"),
+        Input("color-3-dropdown", "value"),
     ],
 )
-def update_scatter(selected_word, sg, color_1987, color_1997, color_2006):
-    if not selected_word:
-        return None, [], []
+def update_scatter(selected_word, sg, color_1, color_2, color_3):
+    # check errors
+    if error_messages:
+        return None, [], [], create_error_modal(error_messages)
 
-    global font_size
+    if not selected_word:
+        return None, [], [], no_update
+
+    global font_size, models
 
     # parameters
-    years = ["2006", "1997", "1987"]
     weight = 5
     topn = 15
 
     # get models and similar words
-    models, similar_words = get_models_and_similar_words(selected_word, years, sg, topn)
+    similar_words = get_similar_words(selected_word, models, years, sg, topn)
 
     # list all words and their embeddings
-    all_embeddings = get_all_embeddings(models, similar_words, selected_word, years, weight)
+    all_embeddings = get_all_embeddings(models[sg], similar_words, selected_word, years, weight)
 
     # Reduce dimensions to 3
     reduced_embed = reduce_embed(all_embeddings)
@@ -533,9 +645,9 @@ def update_scatter(selected_word, sg, color_1987, color_1997, color_2006):
 
     # Update colors based on dropdown selections
     custom_colors = {
-        "1987": color_1987,
-        "1997": color_1997,
-        "2006": color_2006,
+        years[2]: color_1,
+        years[1]: color_2,
+        years[0]: color_3,
     }
     for year, color in custom_colors.items():
         fig.for_each_trace(lambda trace: trace.update(marker=dict(color=color)) if trace.name == year else None)
@@ -544,18 +656,17 @@ def update_scatter(selected_word, sg, color_1987, color_1997, color_2006):
     table_data = []
 
     # Preprocess the data to determine which words are unique to each column
-    unique_1987 = set(similar_words["1987"]) - set(similar_words["1997"]) - set(similar_words["2006"])
-    unique_1997 = set(similar_words["1997"]) - set(similar_words["1987"]) - set(similar_words["2006"])
-    unique_2006 = set(similar_words["2006"]) - set(similar_words["1987"]) - set(similar_words["1997"])
-
+    unique_1 = set(similar_words["1"]) - set(similar_words["2"]) - set(similar_words["3"])
+    unique_2 = set(similar_words["2"]) - set(similar_words["1"]) - set(similar_words["3"])
+    unique_3 = set(similar_words["3"]) - set(similar_words["1"]) - set(similar_words["2"])
     for i in range(topn):
         row = {
-            "1987": similar_words["1987"][i],
-            "1997": similar_words["1997"][i],
-            "2006": similar_words["2006"][i],
-            "1987_isunique": 1 if similar_words["1987"][i] in unique_1987 else 0,
-            "1997_isunique": 1 if similar_words["1997"][i] in unique_1997 else 0,
-            "2006_isunique": 1 if similar_words["2006"][i] in unique_2006 else 0,
+            "1": similar_words["1"][i],
+            "2": similar_words["2"][i],
+            "3": similar_words["3"][i],
+            "1_isunique": 1 if similar_words["1"][i] in unique_1 else 0,
+            "2_isunique": 1 if similar_words["2"][i] in unique_2 else 0,
+            "3_isunique": 1 if similar_words["3"][i] in unique_3 else 0,
         }
         table_data.append(row)
     # Prepare conditional styling for the table
@@ -566,32 +677,32 @@ def update_scatter(selected_word, sg, color_1987, color_1997, color_2006):
         [
             {
                 "if": {
-                    "filter_query": "{1987_isunique} > 0",
-                    "column_id": "1987",
+                    "filter_query": "{1_isunique} > 0",
+                    "column_id": "1",
                 },
-                "color": color_1987,
+                "color": color_1,
             },
             {
                 "if": {
-                    "filter_query": "{1997_isunique} > 0",
-                    "column_id": "1997",
+                    "filter_query": "{2_isunique} > 0",
+                    "column_id": "2",
                 },
-                "color": color_1997,
+                "color": color_2,
             },
             {
                 "if": {
-                    "filter_query": "{2006_isunique} > 0",
-                    "column_id": "2006",
+                    "filter_query": "{3_isunique} > 0",
+                    "column_id": "3",
                 },
-                "color": color_2006,
+                "color": color_3,
             },
         ]
     )
 
     font_size = 25
 
-    return fig, table_data, style_data_conditional
+    return fig, table_data, style_data_conditional, no_update
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
