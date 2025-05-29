@@ -31,7 +31,7 @@ A Dash web application for visualizing the evolution of word embeddings and thei
 
 3. **Prepare models:**
 
-    You need word embedding models in Gensim's `.kv` format. Place the `.kv` files for each year you want to visualize in both `models/sg0/` and `models/sg1/` subfolders. The filenames must be the year (e.g., `1987.kv`, `1997.kv`, `2006.kv`), and the set of years must match between both folders. If you only have one version of the model, copy the same `.kv` file(s) into both `sg0` and `sg1`.
+    You need word embedding models in Gensim's `.kv` format. Place 3 `.kv` files in `models/sg0/` and `models/sg1/` subfolders. The filenames must be the year, and the set of years must match between both folders. If you only have one version of the model, copy the same `.kv` file(s) into both `sg0` and `sg1`.
 
     ```
     models/
