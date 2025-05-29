@@ -29,7 +29,7 @@ A Dash web application for visualizing the evolution of word embeddings and thei
     pip install -r requirements.txt
     ```
 
-3. **Prepare models and data:**
+3. **Prepare models:**
 
     - **Models:**  
       You need word embedding models in Gensim's `.kv` format.  
@@ -65,10 +65,6 @@ A Dash web application for visualizing the evolution of word embeddings and thei
       kv = KeyedVectors.load_word2vec_format('vectors.txt', binary=False)
       kv.save('1987.kv')
       ```
-
-      More info:  
-      - [Loading and saving vectors in Gensim](https://radimrehurek.com/gensim/models/keyedvectors.html#loading-and-saving-vectors)
-      - [Gensim Tutorials](https://radimrehurek.com/gensim/auto_examples/tutorials/run_word2vec.html)
 
 ### Running the App
 
